@@ -20,6 +20,13 @@ client = OpenAI(
 )
 
 # -----------------------------
+# TRAININGEN OPSLAAN
+# -----------------------------
+
+if "trainingen" not in st.session_state:
+    st.session_state.trainingen = []
+
+# -----------------------------
 # TITEL
 # -----------------------------
 
@@ -83,22 +90,100 @@ notitie = st.text_area(
     "Notitie over je training"
 )
 
+# -----------------------------
+# TRAINING OPSLAAN
+# -----------------------------
+
 if st.button("🥊 Training opslaan"):
-    st.success("Training opgeslagen!")
 
-    st.write("### Training")
-    st.write(f"**Datum:** {datum}")
-    st.write(f"**Type:** {training_type}")
-    st.write(f"**Duur:** {duur} minuten")
-    st.write(f"**Intensiteit:** {intensiteit}/10")
+    training = {
+        "datum": str(datum),
+        "type": training_type,
+        "duur": duur,
+        "intensiteit": intensiteit,
+        "onderdelen": onderdelen,
+        "notitie": notitie
+    }
 
-    if onderdelen:
-        st.write(
-            f"**Onderdelen:** {', '.join(onderdelen)}"
-        )
+    st.session_state.trainingen.append(training)
 
-    if notitie:
-        st.write(f"**Notitie:** {notitie}")
+    st.success("✅ Training succesvol opgeslagen!")
+
+st.divider()
+
+# -----------------------------
+# VOORTGANG
+# -----------------------------
+
+st.header("📊 Mijn voortgang")
+
+# Aantal trainingen berekenen
+aantal_trainingen = len(st.session_state.trainingen)
+
+# Alle trainingsminuten bij elkaar optellen
+trainingsminuten = sum(
+    training["duur"]
+    for training in st.session_state.trainingen
+)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.metric(
+        "🥊 Trainingen",
+        aantal_trainingen
+    )
+
+with col2:
+    st.metric(
+        "⏱️ Trainingsminuten",
+        trainingsminuten
+    )
+
+# -----------------------------
+# OPGESLAGEN TRAININGEN
+# -----------------------------
+
+st.divider()
+
+st.header("📋 Mijn trainingen")
+
+if len(st.session_state.trainingen) == 0:
+
+    st.info(
+        "Je hebt nog geen trainingen opgeslagen."
+    )
+
+else:
+
+    for i, training in enumerate(
+        reversed(st.session_state.trainingen),
+        start=1
+    ):
+
+        with st.expander(
+            f"🥊 {training['type']} - {training['datum']}"
+        ):
+
+            st.write(
+                f"**Duur:** {training['duur']} minuten"
+            )
+
+            st.write(
+                f"**Intensiteit:** "
+                f"{training['intensiteit']}/10"
+            )
+
+            if training["onderdelen"]:
+                st.write(
+                    f"**Onderdelen:** "
+                    f"{', '.join(training['onderdelen'])}"
+                )
+
+            if training["notitie"]:
+                st.write(
+                    f"**Notitie:** {training['notitie']}"
+                )
 
 st.divider()
 
@@ -114,57 +199,56 @@ st.write(
 
 vraag = st.text_input(
     "Jouw vraag",
-    placeholder="Bijvoorbeeld: Waar moet ik de komende weken aan werken?"
+    placeholder=(
+        "Bijvoorbeeld: Waar moet ik de komende "
+        "weken aan werken?"
+    )
 )
 
 if st.button("💬 Vraag aan AI Coach"):
 
     if not vraag:
-        st.warning("Vul eerst een vraag in.")
+
+        st.warning(
+            "Vul eerst een vraag in."
+        )
+
     else:
 
-        with st.spinner("AI Coach denkt na..."):
+        with st.spinner(
+            "AI Coach denkt na..."
+        ):
 
             response = client.responses.create(
                 model="gpt-5-mini",
+
                 instructions=(
                     "Je bent de FightTrack AI Coach. "
-                    "Je helpt kickboksers met training, techniek, "
-                    "conditie, herstel en trainingsplanning. "
-                    "Geef praktische en duidelijke antwoorden. "
+                    "Je helpt kickboksers met training, "
+                    "techniek, conditie, herstel en "
+                    "trainingsplanning. "
+                    "Geef praktische en duidelijke "
+                    "antwoorden. "
                     "Geef geen medische diagnoses."
                 ),
+
                 input=vraag
             )
 
             antwoord = response.output_text
 
         st.success("🥊 AI Coach")
+
         st.write(antwoord)
 
 st.divider()
 
 # -----------------------------
-# VOORTGANG
+# EXTRA INFORMATIE
 # -----------------------------
 
-st.header("📊 Mijn voortgang")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.metric(
-        "Trainingen",
-        "0"
-    )
-
-with col2:
-    st.metric(
-        "Trainingsminuten",
-        "0"
-    )
-
 st.info(
-    "💡 Meer trainingsdata en persoonlijke statistieken "
-    "worden later toegevoegd."
+    "💡 Je trainingen worden tijdens deze sessie "
+    "bijgehouden. Trainingsaantallen en minuten "
+    "worden automatisch berekend."
 )
