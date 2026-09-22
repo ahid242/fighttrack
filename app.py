@@ -1,4 +1,9 @@
 import streamlit as st
+from openai import OpenAI
+
+# -----------------------------
+# PAGINA INSTELLEN
+# -----------------------------
 
 st.set_page_config(
     page_title="FightTrack",
@@ -6,15 +11,31 @@ st.set_page_config(
     layout="centered"
 )
 
+# -----------------------------
+# OPENAI
+# -----------------------------
+
+client = OpenAI(
+    api_key=st.secrets["OPENAI_API_KEY"]
+)
+
+# -----------------------------
+# TITEL
+# -----------------------------
+
 st.title("🥊 FightTrack")
 st.subheader("Jouw persoonlijke kickboks-tracker")
 
 st.write(
-    "Houd je trainingen bij, bekijk je voortgang "
-    "en ontdek waar je jezelf kunt verbeteren."
+    "Houd je trainingen bij en krijg persoonlijke "
+    "tips van de FightTrack AI Coach."
 )
 
 st.divider()
+
+# -----------------------------
+# TRAINING TOEVOEGEN
+# -----------------------------
 
 st.header("➕ Training toevoegen")
 
@@ -64,32 +85,86 @@ notitie = st.text_area(
 
 if st.button("🥊 Training opslaan"):
     st.success("Training opgeslagen!")
-    
+
     st.write("### Training")
     st.write(f"**Datum:** {datum}")
     st.write(f"**Type:** {training_type}")
     st.write(f"**Duur:** {duur} minuten")
     st.write(f"**Intensiteit:** {intensiteit}/10")
-    st.write(
-        f"**Onderdelen:** {', '.join(onderdelen) if onderdelen else 'Geen'}"
-    )
-    
+
+    if onderdelen:
+        st.write(
+            f"**Onderdelen:** {', '.join(onderdelen)}"
+        )
+
     if notitie:
         st.write(f"**Notitie:** {notitie}")
 
 st.divider()
+
+# -----------------------------
+# AI COACH
+# -----------------------------
+
+st.header("🤖 FightTrack AI Coach")
+
+st.write(
+    "Stel een vraag over je kickbokstraining."
+)
+
+vraag = st.text_input(
+    "Jouw vraag",
+    placeholder="Bijvoorbeeld: Waar moet ik de komende weken aan werken?"
+)
+
+if st.button("💬 Vraag aan AI Coach"):
+
+    if not vraag:
+        st.warning("Vul eerst een vraag in.")
+    else:
+
+        with st.spinner("AI Coach denkt na..."):
+
+            response = client.responses.create(
+                model="gpt-5-mini",
+                instructions=(
+                    "Je bent de FightTrack AI Coach. "
+                    "Je helpt kickboksers met training, techniek, "
+                    "conditie, herstel en trainingsplanning. "
+                    "Geef praktische en duidelijke antwoorden. "
+                    "Geef geen medische diagnoses."
+                ),
+                input=vraag
+            )
+
+            antwoord = response.output_text
+
+        st.success("🥊 AI Coach")
+        st.write(antwoord)
+
+st.divider()
+
+# -----------------------------
+# VOORTGANG
+# -----------------------------
 
 st.header("📊 Mijn voortgang")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.metric("Trainingen", "0")
+    st.metric(
+        "Trainingen",
+        "0"
+    )
 
 with col2:
-    st.metric("Trainingsminuten", "0")
+    st.metric(
+        "Trainingsminuten",
+        "0"
+    )
 
 st.info(
-    "💡 Binnenkort kun je hier je volledige trainingsgeschiedenis "
-    "en persoonlijke AI-adviezen bekijken."
+    "💡 Meer trainingsdata en persoonlijke statistieken "
+    "worden later toegevoegd."
 )
